@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
@@ -21,8 +22,14 @@ public class TaskController {
     private final AtomicLong counter = new AtomicLong();
 
     @GetMapping("/tasks")
-    public ResponseEntity<Set<Task>> allTasks() {
-        return ResponseEntity.ok(tasks);
+    public ResponseEntity<Set<Task>> allTasks(@RequestParam(required = false) Boolean done) {
+        if (done == null) {
+            return ResponseEntity.ok(tasks);
+        }
+        Set<Task> filtered = tasks.stream()
+            .filter(t -> t.done() != null && t.done().equals(done))
+            .collect(Collectors.toSet());
+        return ResponseEntity.ok(filtered);
     }
 
     @GetMapping("/tasks/{id}")
