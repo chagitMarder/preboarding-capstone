@@ -134,4 +134,38 @@ class HttpRequestTest {
 				.exchange()
 				.expectStatus().isBadRequest();
 	}
+
+	@Test
+	void filterTasksByDoneTrueShouldReturnOnlyCompletedTasks() {
+		taskController.tasks.add(new Task(100, "completed task", true));
+		taskController.tasks.add(new Task(101, "pending task", false));
+
+		restTestClient.get()
+				.uri("http://localhost:%d/tasks?done=true".formatted(port))
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$[?(@.id == 100)].done").isEqualTo(true)
+				.jsonPath("$[?(@.id == 101)]").doesNotExist();
+	}
+
+	@Test
+	void filterTasksByDoneShouldReturnEmptyWhenNoMatch() {
+		taskController.tasks.removeIf(t -> Boolean.TRUE.equals(t.done()));
+
+		restTestClient.get()
+				.uri("http://localhost:%d/tasks?done=true".formatted(port))
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$.length()").isEqualTo(0);
+	}
+
+	@Test
+	void filterTasksByDoneInvalidParamShouldFail() {
+		restTestClient.get()
+				.uri("http://localhost:%d/tasks?done=notABoolean".formatted(port))
+				.exchange()
+				.expectStatus().isBadRequest();
+	}
 }
