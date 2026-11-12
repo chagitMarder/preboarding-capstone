@@ -20,6 +20,15 @@ public class TaskController {
 
     public Set<Task> tasks = new HashSet<>();
     private final AtomicLong counter = new AtomicLong();
+    private final TaskService taskService;
+
+    public TaskController() {
+        this(new TaskService());
+    }
+
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @GetMapping("/tasks")
     public ResponseEntity<Set<Task>> allTasks(@RequestParam(required = false) Boolean done) {
@@ -30,6 +39,11 @@ public class TaskController {
             .filter(t -> t.done() != null && t.done().equals(done))
             .collect(Collectors.toSet());
         return ResponseEntity.ok(filtered);
+    }
+
+    @GetMapping("/tasks/count")
+    public ResponseEntity<TaskCount> getTaskCount() {
+        return ResponseEntity.ok(taskService.getTaskCount(tasks));
     }
 
     @GetMapping("/tasks/{id}")
