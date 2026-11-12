@@ -8,6 +8,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import java.util.Set;
 
@@ -167,5 +168,47 @@ class HttpRequestTest {
 				.uri("http://localhost:%d/tasks?done=notABoolean".formatted(port))
 				.exchange()
 				.expectStatus().isBadRequest();
+	}
+
+	@Test
+	void getTaskCountShouldReturnTotalAndDoneCounts() {
+		taskController.tasks.add(new Task(200, "count task 1", true));
+		taskController.tasks.add(new Task(201, "count task 2", false));
+		taskController.tasks.add(new Task(202, "count task 3", true));
+
+		long expectedTotal = taskController.tasks.size();
+		long expectedDone = taskController.tasks.stream().filter(t -> Boolean.TRUE.equals(t.done())).count();
+
+		restTestClient.get()
+				.uri("http://localhost:%d/tasks/count".formatted(port))
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$.total").isEqualTo(expectedTotal)
+				.jsonPath("$.done").isEqualTo(expectedDone);
+	}
+
+	@Test
+	void getTaskCountWithNullDoneShouldNotCountAsDone() {
+		taskController.tasks.add(new Task(300, "null done task", null));
+
+		long expectedTotal = taskController.tasks.size();
+		long expectedDone = taskController.tasks.stream().filter(t -> Boolean.TRUE.equals(t.done())).count();
+
+		restTestClient.get()
+				.uri("http://localhost:%d/tasks/count".formatted(port))
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$.total").isEqualTo(expectedTotal)
+				.jsonPath("$.done").isEqualTo(expectedDone);
+	}
+
+	@Test
+	void postTaskCountShouldReturnMethodNotAllowed() {
+		restTestClient.post()
+				.uri("http://localhost:%d/tasks/count".formatted(port))
+				.exchange()
+				.expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
 	}
 }

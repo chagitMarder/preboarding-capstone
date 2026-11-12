@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 @RestController
 public class TaskController {
 
+    public record TaskCount(long total, long done) {}
+
     public Set<Task> tasks = new HashSet<>();
     private final AtomicLong counter = new AtomicLong();
 
@@ -30,6 +32,15 @@ public class TaskController {
             .filter(t -> t.done() != null && t.done().equals(done))
             .collect(Collectors.toSet());
         return ResponseEntity.ok(filtered);
+    }
+
+    @GetMapping("/tasks/count")
+    public ResponseEntity<TaskCount> getTaskCount() {
+        long total = tasks.size();
+        long done = tasks.stream()
+            .filter(t -> Boolean.TRUE.equals(t.done()))
+            .count();
+        return ResponseEntity.ok(new TaskCount(total, done));
     }
 
     @GetMapping("/tasks/{id}")
