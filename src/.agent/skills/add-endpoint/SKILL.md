@@ -11,3 +11,4 @@ description: Adds a new REST endpoint to this Spring Boot project with tests. Us
 4. Run ./mvnw test and fix failures until all pass.
 5. Summarize the change and list the files you touched.
 6. Keep the implementation simple. Avoid unnecessary abstractions, duplicated code, and changes unrelated to the requested endpoint.
+7. add the new endpoint to the existing files. do not create a new service
